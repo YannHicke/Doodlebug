@@ -9,52 +9,52 @@ const int NUM_ROW_CELLS = 20;
 
 class Organism
 {
+public:
+    Organism();
+    ~Organism();
+    void operator=(const Oraganism& organism);
+    void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
+    bool just_moved();
+    void set_moved(bool b);
+    char get_status();
+    void set_status(char new_status);
+    virtual void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
+    int get_breedingCounter();
+    void set_breedingCounter(int num);
+    virtual void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
 
+private:
+    char status;
+    int breedingCounter;
+    bool justMoved;
 };
+
 class Doodlebug;
-class Ant
+
+class Ant : public Organism
 {
 public:
     Ant();
     ~Ant();
     void operator=(const Ant& ant);
     //increases counters
-    void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
-    char get_status();
-    bool just_moved();
-    void set_moved(bool b);
-    void set_status(char new_status);
-    void set_breedingCounter(int num);
-    int get_breedingCounter();
-    void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
-private:
-    char status;
-    int breedingCounter;
-    bool justMoved;
+    virtual void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
+    virtual void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
 };
 
-class Doodlebug
+class Doodlebug : public Organism
 {
 public:
     Doodlebug();
     ~Doodlebug();
     void operator=(const Doodlebug& doodlebug);
     //increases counters
-    void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
-    char get_status();
-    bool just_moved();
-    void set_moved(bool b);
-    void set_status(char new_status);
+    virtual void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
+    virtual void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
     int get_starvingCounter();
-    int get_breedingCounter();
     void set_starvingCounter(int num);
-    void set_breedingCounter(int num);
-    void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
 private:
-    char status;
-    int breedingCounter;
     int starvingCounter;
-    bool justMoved;
 };
 
 void initializeMap(int numDoodlebugs, int numAnts, int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[]);
@@ -66,9 +66,9 @@ void change_Setup_Ant(Doodlebug d[], Ant a[], int positionsTaken[], int position
 
 int main()
 {
-    Doodlebug d[NUM_ROW_CELLS*NUM_ROW_CELLS];
-    Ant a[NUM_ROW_CELLS*NUM_ROW_CELLS];
-    int positionsTaken[NUM_ROW_CELLS*NUM_ROW_CELLS] = {0};
+    Doodlebug d[NUM_ROW_CELLS * NUM_ROW_CELLS];
+    Ant a[NUM_ROW_CELLS * NUM_ROW_CELLS];
+    int positionsTaken[NUM_ROW_CELLS * NUM_ROW_CELLS] = {0};
 
     initializeMap(NUM_DOODLEBUGS, NUM_ANTS, NUM_ROW_CELLS, d, a, positionsTaken);
 
@@ -187,14 +187,128 @@ void drawMap(int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[])
                 cout<<" - |";
             }
         }
-        cout<<endl;
-        // for(int j = 0; j < numRowCells; j++)
-        // {
-        //     cout<<"- ";
-        // }
-        cout<<endl;
+        cout<<endl<<endl;
     }
 }
+
+void change_Setup(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position)
+{
+    if(positionsTaken[new_position] == 1)
+    {
+        if(d[new_position].get_status() == 'A')
+        {
+            d[position] = d[position];
+            if(d[position].get_breedingCounter() == 8)
+            {
+                d[position].breed(d, a, positionsTaken, position);
+                d[position].set_breedingCounter(0);
+            }
+            if(d[position].get_starvingCounter() == 3)
+            {
+                d[position].~Doodlebug();
+                positionsTaken[position] = 0;
+            }
+        }
+        else
+        {
+            positionsTaken[position] = 0;
+            d[new_position] = d[position];
+            d[position].~Doodlebug();
+            a[new_position].~Ant();
+            d[new_position].set_starvingCounter(0);
+            if(d[new_position].get_breedingCounter() == 8)
+            {
+                d[new_position].breed(d, a, positionsTaken, new_position);
+                d[new_position].set_breedingCounter(0);
+            }
+        }
+    }
+    else
+    {
+        positionsTaken[position] = 0;
+        d[new_position] = d[position];
+        d[position].~Doodlebug();
+        positionsTaken[new_position] = 1;
+        if(d[new_position].get_breedingCounter() == 8)
+        {
+            d[new_position].breed(d, a, positionsTaken, new_position);
+            d[new_position].set_breedingCounter(0);
+        }
+        if(d[new_position].get_starvingCounter() == 3)
+        {
+            d[new_position].~Doodlebug();
+            positionsTaken[new_position] = 0;
+        }
+    }
+}
+
+void change_Setup_Ant(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position)
+{
+    if(positionsTaken[new_position] == 1)
+    {
+        a[position] = a[position];
+        if(a[position].get_breedingCounter() == 3)
+        {
+            a[position].breed(d, a, positionsTaken, position);
+            a[position].set_breedingCounter(0);
+        }
+    }
+    else
+    {
+        positionsTaken[position] = 0;
+        a[new_position] = a[position];
+        a[position].~Ant();
+        positionsTaken[new_position] = 1;
+        if(a[new_position].get_breedingCounter() == 3)
+        {
+            a[new_position].breed(d, a, positionsTaken, new_position);
+            a[new_position].set_breedingCounter(0);
+        }
+    }
+}
+
+Organism::Organism()
+{
+    status = 'D';
+    breedingCounter = 0;
+    justMoved = false;
+}
+
+Organism::~Organism()
+{
+
+}
+
+void Organism::get_status()
+{
+    return status;
+}
+
+void Organism::set_status(char new_status)
+{
+    status = new_status;
+}
+
+bool Organism::just_moved()
+{
+    return justMoved;
+}
+
+void Organism::set_moved(bool b)
+{
+    justMoved = b;
+}
+
+void Organism::set_breedingCounter(int num)
+{
+    breedingCounter = num;
+}
+
+void Organism::get_breedingCounter()
+{
+    return breedingCounter;
+}
+
 
 void Doodlebug::move(int position, Doodlebug d[], Ant a[], int positionsTaken[])
 {
@@ -350,150 +464,19 @@ void Ant::move(int position, Doodlebug d[], Ant a[], int positionsTaken[])
     }
 }
 
-Doodlebug::Doodlebug()
+
+Doodlebug::Doodlebug():Organism()
 {
-    status = 'D';
-    breedingCounter = 0;
     starvingCounter = 0;
-    justMoved = false;
 }
 
-Ant::Ant()
-{
-    status = 'D';
-    breedingCounter = 0;
-    justMoved = false;
-}
+Ant::Ant():Organism()
+{}
 
-char Ant::get_status()
-{
-    return status;
-}
-
-char Doodlebug::get_status()
-{
-    return status;
-}
-
-void Ant::set_status(char new_status)
-{
-    status = new_status;
-}
-
-void Doodlebug::set_status(char new_status)
-{
-    status = new_status;
-}
-
-bool Doodlebug::just_moved()
-{
-    return justMoved;
-}
-
-void Doodlebug::set_moved(bool b)
-{
-    justMoved = b;
-}
-
-bool Ant::just_moved()
-{
-    return justMoved;
-}
-
-void Ant::set_moved(bool b)
-{
-    justMoved = b;
-}
-
-void change_Setup(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position)
-{
-    if(positionsTaken[new_position] == 1)
-    {
-        if(d[new_position].get_status() == 'A')
-        {
-            d[position] = d[position];
-            if(d[position].get_breedingCounter() == 8)
-            {
-                d[position].breed(d, a, positionsTaken, position);
-                d[position].set_breedingCounter(0);
-            }
-            if(d[position].get_starvingCounter() == 3)
-            {
-                d[position].~Doodlebug();
-                positionsTaken[position] = 0;
-            }
-        }
-        else
-        {
-            positionsTaken[position] = 0;
-            d[new_position] = d[position];
-            d[position].~Doodlebug();
-            a[new_position].~Ant();
-            d[new_position].set_starvingCounter(0);
-            if(d[new_position].get_breedingCounter() == 8)
-            {
-                d[new_position].breed(d, a, positionsTaken, new_position);
-                d[new_position].set_breedingCounter(0);
-            }
-        }
-    }
-    else
-    {
-        positionsTaken[position] = 0;
-        d[new_position] = d[position];
-        d[position].~Doodlebug();
-        positionsTaken[new_position] = 1;
-        if(d[new_position].get_breedingCounter() == 8)
-        {
-            d[new_position].breed(d, a, positionsTaken, new_position);
-            d[new_position].set_breedingCounter(0);
-        }
-        if(d[new_position].get_starvingCounter() == 3)
-        {
-            d[new_position].~Doodlebug();
-            positionsTaken[new_position] = 0;
-        }
-    }
-}
-
-void change_Setup_Ant(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position)
-{
-    if(positionsTaken[new_position] == 1)
-    {
-        a[position] = a[position];
-        if(a[position].get_breedingCounter() == 3)
-        {
-            a[position].breed(d, a, positionsTaken, position);
-            a[position].set_breedingCounter(0);
-        }
-    }
-    else
-    {
-        positionsTaken[position] = 0;
-        a[new_position] = a[position];
-        a[position].~Ant();
-        positionsTaken[new_position] = 1;
-        if(a[new_position].get_breedingCounter() == 3)
-        {
-            a[new_position].breed(d, a, positionsTaken, new_position);
-            a[new_position].set_breedingCounter(0);
-        }
-    }
-}
 
 void Doodlebug::set_starvingCounter(int num)
 {
     starvingCounter = num;
-}
-
-void Doodlebug::set_breedingCounter(int num)
-{
-    breedingCounter = num;
-}
-
-void Ant::set_breedingCounter(int num)
-{
-    breedingCounter = num;
 }
 
 int Doodlebug::get_starvingCounter()
@@ -501,18 +484,11 @@ int Doodlebug::get_starvingCounter()
     return starvingCounter;
 }
 
-int Doodlebug::get_breedingCounter()
-{
-    return breedingCounter;
-}
 
-int Ant::get_breedingCounter()
-{
-    return breedingCounter;
-}
 
 Doodlebug::~Doodlebug()
 {
+    Organism::~O
     status = 'D';
     breedingCounter = 0;
     starvingCounter = 0;
