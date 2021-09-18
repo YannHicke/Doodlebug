@@ -5,14 +5,29 @@ using namespace std;
 
 const int NUM_DOODLEBUGS = 5;
 const int NUM_ANTS = 100;
-const int NUM_ROW_CELLS = 20;
+const int MAX_HEIGHT = 20;
+const int MAX_WIDTH = 20;
+
+class World
+{
+public:
+    World();
+    World(int numDoodlebugs, int numAnts);
+    void next_step();
+    void drawGrid();
+
+private:
+    Organism* grid[MAX_HEIGHT][MAX_WIDTH] = {nullptr};
+};
 
 class Organism
 {
 public:
     Organism();
     ~Organism();
-    void operator=(const Oraganism& organism);
+    char return_type();
+
+    void operator=(const Organism& organism);
     void move(int position, Doodlebug d[], Ant a[], int positionsTaken[]);
     bool just_moved();
     void set_moved(bool b);
@@ -24,6 +39,8 @@ public:
     virtual void breed(Doodlebug d[], Ant a[], int positionsTaken[], int position);
 
 private:
+    char type;
+
     char status;
     int breedingCounter;
     bool justMoved;
@@ -57,8 +74,7 @@ private:
     int starvingCounter;
 };
 
-void initializeMap(int numDoodlebugs, int numAnts, int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[]);
-void drawMap(int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[]);
+
 void nextStep(Doodlebug d[], Ant a[], int positionsTaken[]);
 void change_Setup(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position);
 void change_Setup_Ant(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position);
@@ -96,6 +112,98 @@ int main()
     return 0;
 }
 
+World::World(int numDoodlebugs, int numAnts)
+{
+    int doodlebugCounter(0), antCounter(0);
+    srand(time(0));
+    int isAlive;
+    while(doodlebugCounter < numDoodlebugs)
+    {
+        for(int i = 0; i < MAX_HEIGHT; i++)
+        {
+            for(int j = 0; j < MAX_WIDTH; j++)
+            {
+                isAlive = (rand() % (MAX_WIDTH * MAX_HEIGHT));
+                if((grid[i][j] == nullptr) && (isAlive < numDoodlebugs) && (doodlebugCounter < numDoodlebugs))
+                {
+                    grid[i][j] = new Doodlebug;
+                    doodlebugCounter += 1;
+                }
+            }
+            
+        }
+    }
+
+    while(antCounter < numAnts)
+    {
+        for(int i = 0; i < MAX_HEIGHT; i++)
+        {
+            for(int j = 0; j < MAX_WIDTH; j++)
+            {
+                isAlive = (rand() % (MAX_WIDTH * MAX_HEIGHT));
+                if((grid[i][j] == nullptr) && (isAlive < numAnts) && (antCounter < numAnts))
+                {
+                    grid[i][j] = new Ant;
+                    antCounter += 1;
+                }
+            }
+            
+        }
+    }
+
+
+}
+
+void World::drawGrid()
+{
+    cout<<endl;
+    for(int i = 0; i < MAX_HEIGHT; i++)
+    {
+        for(int j = 0; j < MAX_WIDTH; j++)
+        {
+            if(grid[i][j] == nullptr)
+            {
+                cout<<" - |";
+            }
+            else if(grid[i][j] -> return_type() == 'D')
+            {
+                cout<<" X |";
+            }
+            else
+            {
+                cout<<" o |";
+            }
+        }
+        cout<<endl<<endl;
+    }
+}
+
+char Organsim::return_type()
+{
+    return type;
+}
+
+void World::next_step()
+{
+    for(int i = 0; i < MAX_HEIGHT; i++)
+    {
+        for(int j = 0; j < MAX_WIDTH)
+        {
+            if(grid[i][j] -> return_type() == 'D')
+            {
+                grid[i][j]-> move()
+            }
+        }
+        if((d[i].get_status() == 'A') && (d[i].just_moved() == false))
+        {
+            d[i].move(i, d, a, positionsTaken);
+        }
+    }
+}
+
+
+
+
 void nextStep(Doodlebug d[], Ant a[], int positionsTaken[])
 {
     for(int i = 0; i < NUM_ROW_CELLS*NUM_ROW_CELLS; i++)
@@ -125,71 +233,126 @@ void nextStep(Doodlebug d[], Ant a[], int positionsTaken[])
 
 }
 
-void initializeMap(int numDoodlebugs, int numAnts, int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[])
+void Doodlebug::move()
 {
-    
-    int doodlebugCounter(0), antCounter(0);
-
-    srand(time(0));
-    int isAlive;
-    while(doodlebugCounter < numDoodlebugs)
+    //choose direction
+    int direction = (rand() % 4);
+    // cout<<position<<" "<<direction<<endl;
+    switch(direction)
     {
-        for(int i = 0; i < NUM_ROW_CELLS*NUM_ROW_CELLS; i++)
-        {
-            isAlive = (rand() % NUM_ROW_CELLS*NUM_ROW_CELLS);
-            if((isAlive < numDoodlebugs) && (doodlebugCounter < numDoodlebugs))
+        case 0:
+            if(i > 0)
             {
-                cout<<i<<endl;
-                d[i].set_status('A');
-                doodlebugCounter += 1;
-                positionsTaken[i] = 1;
-            }
-        }
-    }
-    while(antCounter < numAnts)
-    {
-        for(int i = 0; i < NUM_ROW_CELLS*NUM_ROW_CELLS; i++)
-        {
-            isAlive = (rand() % NUM_ROW_CELLS*NUM_ROW_CELLS);
-            if((isAlive < numAnts) && (positionsTaken[i] == 0) && (antCounter < numAnts))
-            {
-                a[i].set_status('A');
-                antCounter += 1;
-                positionsTaken[i] = 1;
-            }
-        }
-    }
-
-    drawMap(numRowCells, d, a, positionsTaken);
-
-}
-
-void drawMap(int numRowCells, Doodlebug d[], Ant a[], int positionsTaken[])
-{
-    cout<<endl;
-    for(int i = 0; i < numRowCells; i++)
-    {
-        for(int j = 0; j < numRowCells; j++)
-        {
-            if(positionsTaken[j + i*numRowCells] == 1)
-            {
-                if(d[j + i*numRowCells].get_status() == 'A')
+                if(grid[i-1][j]-> return_type() == 'D')
                 {
-                    cout<<" X |";
+                    if(breedingCounter == 8)
+                    {
+                        breed();
+                        d[position].set_breedingCounter(0);
+                    }
+                    if(starvingCounter == 3)
+                    {
+                        grid[i][j] = nullptr;
+                        ~Doodlebug();
+                    }
+                }
+                else if(grid[i-1][j]-> return_type() == 'A')
+                    {
+                        positionsTaken[position] = 0;
+                        d[new_position] = d[position];
+                        d[position].~Doodlebug();
+                        a[new_position].~Ant();
+                        d[new_position].set_starvingCounter(0);
+                        if(d[new_position].get_breedingCounter() == 8)
+                        {
+                            d[new_position].breed(d, a, positionsTaken, new_position);
+                            d[new_position].set_breedingCounter(0);
+                        }
+                    }
                 }
                 else
                 {
-                    cout<<" o |";
+                    positionsTaken[position] = 0;
+                    d[new_position] = d[position];
+                    d[position].~Doodlebug();
+                    positionsTaken[new_position] = 1;
+                    if(d[new_position].get_breedingCounter() == 8)
+                    {
+                        d[new_position].breed(d, a, positionsTaken, new_position);
+                        d[new_position].set_breedingCounter(0);
+                    }
+                    if(d[new_position].get_starvingCounter() == 3)
+                    {
+                        d[new_position].~Doodlebug();
+                        positionsTaken[new_position] = 0;
+                    }
                 }
             }
             else
             {
-                cout<<" - |";
+                d[position] = d[position];
+                if(d[position].get_breedingCounter() == 8)
+                {
+                    d[position].breed(d, a, positionsTaken, position);
+                    d[position].set_breedingCounter(0);
+                }
             }
-        }
-        cout<<endl<<endl;
+        break;
+
+        case 1:
+            if(((position + 1) / NUM_ROW_CELLS) == (position / NUM_ROW_CELLS))
+            {
+                change_Setup(d, a, positionsTaken, position, (position + 1));
+            }
+            else
+            {
+                d[position] = d[position];
+                if(d[position].get_breedingCounter() == 8)
+                {
+                    d[position].breed(d, a, positionsTaken, position);
+                    d[position].set_breedingCounter(0);
+                }
+            }
+        break;
+
+        case 2:
+            if(position + NUM_ROW_CELLS < (NUM_ROW_CELLS * NUM_ROW_CELLS))
+            {
+                change_Setup(d, a, positionsTaken, position, (position + NUM_ROW_CELLS));
+            }
+            else
+            {
+                d[position] = d[position];
+                if(d[position].get_breedingCounter() == 8)
+                {
+                    d[position].breed(d, a, positionsTaken, position);
+                    d[position].set_breedingCounter(0);
+                }
+            }
+        break;
+
+        case 3:
+            if((position > 0) && (((position - 1) / NUM_ROW_CELLS) == (position / NUM_ROW_CELLS)))
+            {
+                change_Setup(d, a, positionsTaken, position, (position - 1));
+            }
+            else
+            {
+                d[position] = d[position];
+                if(d[position].get_breedingCounter() == 8)
+                {
+                    d[position].breed(d, a, positionsTaken, position);
+                    d[position].set_breedingCounter(0);
+                }
+            }
+        break;
+
+        default:
+            cout<<"Error with function rand"<<endl;
+            exit(1);
     }
 }
+
 
 void change_Setup(Doodlebug d[], Ant a[], int positionsTaken[], int position, int new_position)
 {
